@@ -1,0 +1,6 @@
+Fecha,Comprobante,Serie,Numero,Numdoc,Clientes,Codigo,Descripcion,UM,Cantidad,Moneda,PUnidad,PCompra,PUnitario,PVenta,Ganancia,Utilidad,Usuario
+15/01/2023,Factura,F001,1,12345678,Cliente A,C001,Laptop Dell,UND,10,PEN,3000,2500,3000,30000,5000,20%,Juan Perez
+20/02/2023,Boleta,B001,2,87654321,Cliente B,C002,Mouse Logitech,UND,50,PEN,50,30,50,2500,1000,40%,Maria Lopez
+10/03/2023,Factura,F001,3,12345678,Cliente A,C001,Laptop Dell,UND,5,PEN,3000,2500,3000,15000,2500,20%,Juan Perez
+05/04/2024,Factura,F001,4,11223344,Cliente C,C003,Teclado Mecanico,UND,20,PEN,200,100,200,4000,2000,50%,Carlos Ruiz
+15/05/2024,Factura,F001,5,11223344,Cliente D,C002,Mouse Logitech,UND,100,PEN,50,30,50,5000,2000,40%,Maria Lopez
