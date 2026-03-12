@@ -2,7 +2,23 @@ import { read, utils } from "xlsx";
 
 type SalesData = {
     Fecha: string | number | Date;
-    PVenta: number;
+    Comprobante?: string;
+    Serie?: string;
+    Numero?: string | number;
+    Numdoc?: string | number;
+    Clientes?: string;
+    Codigo?: string;
+    Descripcion?: string;
+    UM?: string;
+    Cantidad?: number;
+    Moneda?: string;
+    PUnidad?: number;
+    PCompra?: number;
+    PUnitario?: number;
+    PVenta?: number;
+    Ganancia?: number;
+    Utilidad?: string | number;
+    Usuario?: string;
     [key: string]: any;
 };
 
