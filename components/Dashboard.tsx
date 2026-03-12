@@ -96,12 +96,13 @@ export function Dashboard({ data }: DashboardProps) {
     const monthsCount = data.monthly.length;
     const totalPeriodExpenses = totalMonthlyExpenses * monthsCount;
 
-    const netProfit = totalRevenue - totalPeriodExpenses;
+    const grossProfit = data.kpi.totalProfit;
+    const netProfit = grossProfit - totalPeriodExpenses;
 
     const monthlyDataWithNet = data.monthly.map(m => ({
         ...m,
         grossProfit: m.profit,
-        netProfit: m.revenue - totalMonthlyExpenses,
+        netProfit: m.profit - totalMonthlyExpenses,
     }));
 
     return (
@@ -128,18 +129,18 @@ export function Dashboard({ data }: DashboardProps) {
                         <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">Ingresos Totales</p>
                         <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(totalRevenue)}</p>
                     </div>
-                    {/* <div className="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-center">
+                    <div className="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-center">
                         <p className="text-sm font-medium text-emerald-600 uppercase tracking-wide">Ganancia Bruta</p>
                         <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(grossProfit)}</p>
-                    </div> */}
+                    </div>
                     <div className="bg-gradient-to-br from-teal-50 to-white p-6 rounded-xl border border-teal-100 shadow-sm flex flex-col justify-center">
                         <p className="text-sm font-medium text-teal-600 uppercase tracking-wide">Ganancia Neta</p>
                         <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(netProfit)}</p>
                     </div>
-                    {/* <div className="bg-gradient-to-br from-amber-50 to-white p-6 rounded-xl border border-amber-100 shadow-sm flex flex-col justify-center">
+                    <div className="bg-gradient-to-br from-amber-50 to-white p-6 rounded-xl border border-amber-100 shadow-sm flex flex-col justify-center">
                         <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">Utilidad Promed.</p>
                         <p className="text-2xl font-bold text-gray-900 mt-2">{data.kpi.avgUtility.toFixed(2)}%</p>
-                    </div> */}
+                    </div>
                     <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-xl border border-purple-100 shadow-sm flex flex-col justify-center">
                         <p className="text-sm font-medium text-purple-600 uppercase tracking-wide">Mejor Año</p>
                         <p className="text-2xl font-bold text-gray-900 mt-2">
@@ -244,8 +245,8 @@ export function Dashboard({ data }: DashboardProps) {
                                             formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : "0"}
                                         />
                                         <Legend verticalAlign="top" height={36} />
-                                        <Bar dataKey="revenue" name="Ingresos Totales" barSize={30} fill="#4f46e5" radius={[4, 4, 0, 0]} />
-                                        {/* <Line type="monotone" dataKey="grossProfit" name="Ganancia Bruta" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} /> */}
+                                        <Bar dataKey="revenue" name="Ingresos (PVenta)" barSize={30} fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                                        <Line type="monotone" dataKey="grossProfit" name="Ganancia Bruta" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                                         <Line type="monotone" dataKey="netProfit" name="Ganancia Neta" stroke="#10b981" strokeWidth={4} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                                     </ComposedChart>
                                 </ResponsiveContainer>
@@ -298,7 +299,6 @@ export function Dashboard({ data }: DashboardProps) {
 
 
                     {/* Top 10 Products */}
-                    {/* Top 10 Products (Temporarily Hidden)
                     <div className="h-[650px] bg-gray-50 p-6 rounded-xl border border-gray-100">
                         <h3 className="text-xl font-semibold text-gray-800 mb-6">Top 10 Productos Estrella</h3>
                         <ResponsiveContainer width="100%" height="100%">
@@ -330,7 +330,7 @@ export function Dashboard({ data }: DashboardProps) {
                                 <Bar dataKey="value" name="Ventas Totales" fill="#818cf8" radius={[0, 6, 6, 0]} barSize={25} />
                             </BarChart>
                         </ResponsiveContainer>
-                    </div> */}
+                    </div>
 
                     {/* Sales by Seller */}
                     <div className="h-[650px] bg-gray-50 p-6 rounded-xl border border-gray-100">
