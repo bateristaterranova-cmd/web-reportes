@@ -16,6 +16,7 @@ type SalesData = {
     PCompra?: number;
     PUnitario?: number;
     PVenta?: number;
+    Total?: number;
     Ganancia?: number;
     Utilidad?: string | number;
     Usuario?: string;
@@ -71,7 +72,7 @@ export async function processExcelFile(file: File) {
             dateObj = rawDate;
         }
 
-        const revenue = Number(row.PVenta) || 0;
+        const revenue = Number(row.Total) || Number(row.PVenta) || 0;
         const profit = Number(row.Ganancia) || 0;
 
         let utility = 0;
