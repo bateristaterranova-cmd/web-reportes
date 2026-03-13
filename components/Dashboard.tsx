@@ -21,7 +21,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { toPng } from 'html-to-image';
 import jsPDF from "jspdf";
-import { Download, Trash2, Plus } from "lucide-react";
+import { Download, Trash2, Plus, Save } from "lucide-react";
 
 interface DashboardProps {
     data: {
@@ -34,6 +34,7 @@ interface DashboardProps {
             avgUtility: number;
         }
     };
+    onSaveSuccess?: () => void;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -55,7 +56,7 @@ const INITIAL_EXPENSES: Expense[] = [
     { id: '7', description: 'Internet', category: 'Fijos', amount: 40 },
 ];
 
-export function Dashboard({ data }: DashboardProps) {
+export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
     const dashboardRef = useRef<HTMLDivElement>(null);
     const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES);
     const [newExpense, setNewExpense] = useState({ description: '', amount: '' });
@@ -105,9 +106,51 @@ export function Dashboard({ data }: DashboardProps) {
         netProfit: m.profit - totalMonthlyExpenses,
     }));
 
+    const [isSaving, setIsSaving] = useState(false);
+
+    const saveReport = async () => {
+        setIsSaving(true);
+        try {
+            const reportData = {
+                mes: data.monthly[0]?.name || "Desconocido", // Assuming the first month represents the report or could just be aggregated
+                anio: parseInt(data.monthly[0]?.name?.split('-')[0]) || new Date().getFullYear(),
+                ingresosTotales: totalRevenue,
+                gastosOperativos: totalPeriodExpenses,
+                gananciaNeta: netProfit,
+                detallesExtra: data // Store the entire raw processed data to reconstruct it when loading
+            };
+
+            const response = await fetch('/api/reportes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reportData)
+            });
+
+            if (response.ok) {
+                if (onSaveSuccess) onSaveSuccess();
+                alert("Reporte guardado exitosamente");
+            } else {
+                alert("Error al guardar reporte");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error al guardar reporte");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         <div className="max-w-7xl mx-auto">
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-end items-center gap-4 mb-6">
+                <button
+                    onClick={saveReport}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50"
+                >
+                    <Save className="w-4 h-4" />
+                    {isSaving ? "Guardando..." : "Guardar Reporte"}
+                </button>
                 <button
                     onClick={downloadPDF}
                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
