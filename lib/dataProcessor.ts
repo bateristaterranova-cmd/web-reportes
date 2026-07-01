@@ -30,8 +30,8 @@ export async function parseExcelFile(file: File): Promise<SalesData[]> {
 }
 
 export function aggregateData(rawData: SalesData[]) {
+    const dailyStats: Record<string, { revenue: number; profit: number }> = {};
     const monthlyStats: Record<string, { revenue: number; profit: number }> = {};
-    const yearlyStats: Record<string, number> = {};
     const productStats: Record<string, number> = {};
     const sellerStats: Record<string, number> = {};
 
@@ -85,15 +85,24 @@ export function aggregateData(rawData: SalesData[]) {
         if (dateObj && !isNaN(dateObj.getTime())) {
             const year = dateObj.getFullYear();
             const monthNum = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+            const dayNum = dateObj.getDate().toString().padStart(2, '0');
+            
             const keyMonth = `${year}-${monthNum}`;
+            const keyDay = `${year}-${monthNum}-${dayNum}`;
 
+            // Monthly stats
             if (!monthlyStats[keyMonth]) {
                 monthlyStats[keyMonth] = { revenue: 0, profit: 0 };
             }
             monthlyStats[keyMonth].revenue += revenue;
             monthlyStats[keyMonth].profit += profit;
 
-            yearlyStats[year] = (yearlyStats[year] || 0) + revenue;
+            // Daily stats
+            if (!dailyStats[keyDay]) {
+                dailyStats[keyDay] = { revenue: 0, profit: 0 };
+            }
+            dailyStats[keyDay].revenue += revenue;
+            dailyStats[keyDay].profit += profit;
         }
 
         totalProfit += profit;
@@ -102,8 +111,9 @@ export function aggregateData(rawData: SalesData[]) {
             utilityCount++;
         }
 
+        // Top products by profit (Margen) rather than revenue (Total)
         if (product) {
-            productStats[product] = (productStats[product] || 0) + revenue;
+            productStats[product] = (productStats[product] || 0) + profit;
         }
 
         if (seller) {
@@ -119,10 +129,11 @@ export function aggregateData(rawData: SalesData[]) {
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
 
-    const yearlyData = Object.entries(yearlyStats)
-        .map(([name, value]) => ({
+    const dailyData = Object.entries(dailyStats)
+        .map(([name, stats]) => ({
             name,
-            value,
+            revenue: stats.revenue,
+            profit: stats.profit,
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -138,8 +149,8 @@ export function aggregateData(rawData: SalesData[]) {
     const avgUtility = utilityCount > 0 ? (totalUtility / utilityCount) : 0;
 
     return {
+        daily: dailyData,
         monthly: monthlyData,
-        yearly: yearlyData,
         topProducts,
         sellers: sellerData,
         kpi: {
