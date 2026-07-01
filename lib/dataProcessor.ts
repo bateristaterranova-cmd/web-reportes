@@ -36,8 +36,8 @@ export function aggregateData(rawData: SalesData[]) {
     const sellerStats: Record<string, number> = {};
 
     let totalProfit = 0;
-    let totalUtility = 0;
-    let utilityCount = 0;
+    let totalRevenue = 0;
+    const uniqueOrders = new Set<string>();
 
     rawData.forEach((row) => {
         let dateObj: Date | null = null;
@@ -74,13 +74,13 @@ export function aggregateData(rawData: SalesData[]) {
         const revenue = Number(row.Total) || Number(row.PVenta) || 0;
         const profit = Number(row.Margen) || Number(row.Ganancia) || 0;
 
-        let utility = 0;
-        if (revenue > 0) {
-            utility = (profit / revenue) * 100;
-        }
-
         const product = String(row["Variante del producto"] || row.Descripcion || "Desconocido").trim();
         const seller = String(row.Vendedor || row.Usuario || "Desconocido").trim();
+        
+        const orderRef = row.Orden || row.Order;
+        if (orderRef) {
+            uniqueOrders.add(String(orderRef).trim());
+        }
 
         if (dateObj && !isNaN(dateObj.getTime())) {
             const year = dateObj.getFullYear();
@@ -106,10 +106,7 @@ export function aggregateData(rawData: SalesData[]) {
         }
 
         totalProfit += profit;
-        if (!isNaN(utility)) {
-            totalUtility += utility;
-            utilityCount++;
-        }
+        totalRevenue += revenue;
 
         // Top products by profit (Margen) rather than revenue (Total)
         if (product) {
@@ -146,7 +143,9 @@ export function aggregateData(rawData: SalesData[]) {
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
-    const avgUtility = utilityCount > 0 ? (totalUtility / utilityCount) : 0;
+    const avgUtility = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    const totalOrders = uniqueOrders.size > 0 ? uniqueOrders.size : rawData.length;
+    const averageTicket = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
     return {
         daily: dailyData,
@@ -156,6 +155,10 @@ export function aggregateData(rawData: SalesData[]) {
         kpi: {
             totalProfit,
             avgUtility,
+            totalRevenue,
+            totalOrders,
+            averageTicket,
         },
+        rawData
     };
 }
