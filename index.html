@@ -267,28 +267,7 @@
 </div>
 </div>
 </div>
-</div>
-</div>
-<div class="flex flex-col gap-xs">
-<div class="flex justify-between font-body-sm text-body-sm">
-<span class="text-on-surface font-medium">Klisman Jordi</span>
-<span class="text-on-surface-variant">28 Órdenes</span>
-</div>
-<div class="w-full bg-surface-container rounded-full h-2">
-<div class="bg-primary/80 h-2 rounded-full" style="width: 60%"></div>
-</div>
-</div>
-<div class="flex flex-col gap-xs">
-<div class="flex justify-between font-body-sm text-body-sm">
-<span class="text-on-surface font-medium">Huamani Parco</span>
-<span class="text-on-surface-variant">22 Órdenes</span>
-</div>
-<div class="w-full bg-surface-container rounded-full h-2">
-<div class="bg-primary/60 h-2 rounded-full" style="width: 45%"></div>
-</div>
-</div>
-</div>
-</div>
+
 <!-- Categories -->
 <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
 <h2 class="font-headline-md text-headline-md text-on-surface mb-lg">Ventas por Categoría</h2>
@@ -296,36 +275,15 @@
     <!-- Dynamic Categories -->
 </div>
 </div>
-<div class="flex items-center justify-between p-sm hover:bg-surface-container-low rounded-lg transition-colors">
-<div class="flex items-center gap-sm">
-<span class="w-3 h-3 rounded-full bg-primary/80"></span>
-<span class="font-body-sm text-body-sm text-on-surface">Guitarras</span>
-</div>
-<span class="font-label-caps text-label-caps text-on-surface-variant">30%</span>
-</div>
-<div class="flex items-center justify-between p-sm hover:bg-surface-container-low rounded-lg transition-colors">
-<div class="flex items-center gap-sm">
-<span class="w-3 h-3 rounded-full bg-primary/60"></span>
-<span class="font-body-sm text-body-sm text-on-surface">Teclados</span>
-</div>
-<span class="font-label-caps text-label-caps text-on-surface-variant">15%</span>
-</div>
-<div class="flex items-center justify-between p-sm hover:bg-surface-container-low rounded-lg transition-colors">
-<div class="flex items-center gap-sm">
-<span class="w-3 h-3 rounded-full bg-primary/40"></span>
-<span class="font-body-sm text-body-sm text-on-surface">Violines</span>
-</div>
-<span class="font-label-caps text-label-caps text-on-surface-variant">13%</span>
-</div>
-</div>
-</div>
 </section>
+
 <!-- Daily Trend -->
 <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-xl relative">
 <div class="flex justify-between items-center mb-xl">
 <h2 id="chart-title" class="font-headline-md text-headline-md text-on-surface">Tendencia de Ventas</h2>
 <div class="flex bg-surface-container rounded-lg p-1 no-print">
 <button id="show-chart-btn" class="px-md py-xs rounded-md bg-surface-container-lowest text-on-surface font-label-md shadow-sm transition-all duration-200">Gráfico</button>
+<button id="show-bars-btn" class="px-md py-xs rounded-md text-on-surface-variant hover:text-on-surface font-label-md transition-all duration-200">Barras</button>
 <button id="show-table-btn" class="px-md py-xs rounded-md text-on-surface-variant hover:text-on-surface font-label-md transition-all duration-200">Vista de Tabla</button>
 </div>
 </div>
@@ -522,6 +480,7 @@
     
     // Core state
     let salesData = [];
+    let chartViewMode = 'line'; // 'line' | 'bar' | 'table'
     
     // Column header mappings (robust Spanish & English check)
     let headerMap = {
@@ -920,8 +879,9 @@
         });
         
         const sortedDates = Object.keys(dailySales).sort();
+        const N = sortedDates.length;
         
-        if (sortedDates.length === 0) {
+        if (N === 0) {
             trendSvg.innerHTML = '<text x="500" y="150" fill="#6c7a71" font-size="16" text-anchor="middle">Sin datos de tendencias</text>';
             return;
         }
@@ -942,15 +902,14 @@
         const svgH = 300;
         const marginY = 50;
         const chartH = svgH - marginY - 30; // 220px drawing height
+        const yBase = 260;
         
         const maxVal = Math.max(...Object.values(dailySales)) || 1;
-        const N = sortedDates.length;
         
         // Render horizontal grid lines
         const gridLines = 4;
         for (let i = 0; i <= gridLines; i++) {
             const y = marginY + (chartH * i) / gridLines;
-            const val = maxVal - (maxVal * i) / gridLines;
             
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', '0');
@@ -963,97 +922,156 @@
         }
         
         // Calculate points
+        const paddingX = N > 1 ? 50 : svgW / 2;
         const points = [];
         sortedDates.forEach((date, i) => {
-            const x = N > 1 ? (i * svgW) / (N - 1) : svgW / 2;
-            const y = svgH - 40 - (dailySales[date] / maxVal) * chartH;
+            const x = N > 1 ? paddingX + (i * (svgW - 2 * paddingX)) / (N - 1) : svgW / 2;
+            const y = yBase - (dailySales[date] / maxVal) * chartH;
             points.push({ x, y, val: dailySales[date], date: date });
         });
         
-        // Define SVG linear gradient
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        defs.innerHTML = `
-            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
-                <stop offset="100%" stop-color="#10b981" stop-opacity="0.00"/>
-            </linearGradient>
-        `;
-        trendSvg.appendChild(defs);
+        const tooltip = document.getElementById('tooltip');
         
-        // Create path string for the line
-        let pathD = '';
-        points.forEach((p, idx) => {
-            if (idx === 0) {
-                pathD += `M ${p.x} ${p.y}`;
-            } else {
-                pathD += ` L ${p.x} ${p.y}`;
+        if (chartViewMode === 'line') {
+            // Draw Line Chart
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            defs.innerHTML = `
+                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
+                    <stop offset="100%" stop-color="#10b981" stop-opacity="0.00"/>
+                </linearGradient>
+            `;
+            trendSvg.appendChild(defs);
+            
+            // Create path string for the line
+            let pathD = '';
+            points.forEach((p, idx) => {
+                if (idx === 0) {
+                    pathD += `M ${p.x} ${p.y}`;
+                } else {
+                    pathD += ` L ${p.x} ${p.y}`;
+                }
+            });
+            
+            // Draw the gradient filled polygon under the line
+            if (points.length > 0) {
+                let fillD = pathD + ` L ${points[points.length - 1].x} ${yBase} L ${points[0].x} ${yBase} Z`;
+                const fillPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                fillPath.setAttribute('d', fillD);
+                fillPath.setAttribute('fill', 'url(#chartGradient)');
+                trendSvg.appendChild(fillPath);
             }
-        });
-        
-        // Draw the gradient filled polygon under the line
-        if (points.length > 0) {
-            let fillD = pathD + ` L ${points[points.length - 1].x} 260 L ${points[0].x} 260 Z`;
-            const fillPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            fillPath.setAttribute('d', fillD);
-            fillPath.setAttribute('fill', 'url(#chartGradient)');
-            trendSvg.appendChild(fillPath);
+            
+            // Draw the main line
+            const mainPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            mainPath.setAttribute('d', pathD);
+            mainPath.setAttribute('fill', 'none');
+            mainPath.setAttribute('stroke', '#10b981');
+            mainPath.setAttribute('stroke-width', '3');
+            mainPath.setAttribute('stroke-linecap', 'round');
+            mainPath.setAttribute('stroke-linejoin', 'round');
+            trendSvg.appendChild(mainPath);
+            
+            // Draw circles & attach tooltips
+            points.forEach((p) => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', p.x.toString());
+                circle.setAttribute('cy', p.y.toString());
+                circle.setAttribute('r', '6');
+                circle.setAttribute('fill', '#10b981');
+                circle.setAttribute('stroke', '#ffffff');
+                circle.setAttribute('stroke-width', '2');
+                circle.setAttribute('class', 'cursor-pointer transition-all duration-150 hover:scale-125');
+                
+                // Hover events
+                circle.addEventListener('mouseenter', (e) => {
+                    circle.setAttribute('r', '8');
+                    circle.setAttribute('stroke-width', '3');
+                    
+                    const rect = trendSvg.getBoundingClientRect();
+                    const scaleX = rect.width / svgW;
+                    const scaleY = rect.height / svgH;
+                    const posX = rect.left + window.scrollX + p.x * scaleX;
+                    const posY = rect.top + window.scrollY + p.y * scaleY;
+                    
+                    tooltip.style.left = posX + 'px';
+                    tooltip.style.top = posY + 'px';
+                    tooltip.style.opacity = '1';
+                    tooltip.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 2px;">${formatDateStr(p.date)}</div>
+                        <div style="color: #6ffbbe; font-size: 13px;">${formatCurrency(p.val)}</div>
+                    `;
+                });
+                
+                circle.addEventListener('mouseleave', () => {
+                    circle.setAttribute('r', '6');
+                    circle.setAttribute('stroke-width', '2');
+                    tooltip.style.opacity = '0';
+                });
+                
+                trendSvg.appendChild(circle);
+            });
+        } else if (chartViewMode === 'bar') {
+            // Draw Bar Chart (Columns)
+            const spacing = N > 1 ? (points[1].x - points[0].x) : svgW;
+            const barWidth = Math.min(50, spacing * 0.45); // Limit maximum width to 50px
+            
+            points.forEach((p) => {
+                const x = p.x - barWidth / 2;
+                const h = yBase - p.y;
+                const barY = p.y;
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const r = 4; // Corner radius for top of bar
+                let d = '';
+                
+                if (h > r) {
+                    d = `M ${x},${yBase} L ${x},${barY + r} A ${r},${r} 0 0,1 ${x + r},${barY} L ${x + barWidth - r},${barY} A ${r},${r} 0 0,1 ${x + barWidth},${barY + r} L ${x + barWidth},${yBase} Z`;
+                } else {
+                    d = `M ${x},${yBase} L ${x},${barY} L ${x + barWidth},${barY} L ${x + barWidth},${yBase} Z`;
+                }
+                
+                path.setAttribute('d', d);
+                path.setAttribute('fill', '#10b981');
+                path.setAttribute('class', 'cursor-pointer transition-all duration-150 hover:fill-primary/80');
+                
+                // Hover events
+                path.addEventListener('mouseenter', (e) => {
+                    path.setAttribute('fill', '#006c49'); // Use Primary Tint
+                    
+                    const rect = trendSvg.getBoundingClientRect();
+                    const scaleX = rect.width / svgW;
+                    const scaleY = rect.height / svgH;
+                    const posX = rect.left + window.scrollX + (x + barWidth / 2) * scaleX;
+                    const posY = rect.top + window.scrollY + barY * scaleY;
+                    
+                    tooltip.style.left = posX + 'px';
+                    tooltip.style.top = posY + 'px';
+                    tooltip.style.opacity = '1';
+                    tooltip.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 2px;">${formatDateStr(p.date)}</div>
+                        <div style="color: #6ffbbe; font-size: 13px;">${formatCurrency(p.val)}</div>
+                    `;
+                });
+                
+                path.addEventListener('mouseleave', () => {
+                    path.setAttribute('fill', '#10b981');
+                    tooltip.style.opacity = '0';
+                });
+                
+                trendSvg.appendChild(path);
+            });
         }
         
-        // Draw the main line
-        const mainPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        mainPath.setAttribute('d', pathD);
-        mainPath.setAttribute('fill', 'none');
-        mainPath.setAttribute('stroke', '#10b981');
-        mainPath.setAttribute('stroke-width', '3');
-        mainPath.setAttribute('stroke-linecap', 'round');
-        mainPath.setAttribute('stroke-linejoin', 'round');
-        trendSvg.appendChild(mainPath);
+        // Position labels exactly underneath each point using absolute positioning
+        labelsContainer.style.position = 'relative';
+        labelsContainer.style.height = '24px';
         
-        // Draw circles & attach tooltips
-        const tooltip = document.getElementById('tooltip');
-        points.forEach((p, i) => {
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', p.x.toString());
-            circle.setAttribute('cy', p.y.toString());
-            circle.setAttribute('r', '6');
-            circle.setAttribute('fill', '#10b981');
-            circle.setAttribute('stroke', '#ffffff');
-            circle.setAttribute('stroke-width', '2');
-            circle.setAttribute('class', 'cursor-pointer transition-all duration-150');
-            
-            // Hover events
-            circle.addEventListener('mouseenter', (e) => {
-                circle.setAttribute('r', '8');
-                circle.setAttribute('stroke-width', '3');
-                
-                // Position tooltip
-                const rect = trendSvg.getBoundingClientRect();
-                // Map SVG viewBox coordinates back to actual screen pixels
-                const scaleX = rect.width / svgW;
-                const scaleY = rect.height / svgH;
-                const posX = rect.left + window.scrollX + p.x * scaleX;
-                const posY = rect.top + window.scrollY + p.y * scaleY;
-                
-                tooltip.style.left = posX + 'px';
-                tooltip.style.top = posY + 'px';
-                tooltip.style.opacity = '1';
-                tooltip.innerHTML = `
-                    <div style="font-weight: 600; margin-bottom: 2px;">${formatDateStr(p.date)}</div>
-                    <div style="color: #6ffbbe; font-size: 13px;">${formatCurrency(p.val)}</div>
-                `;
-            });
-            
-            circle.addEventListener('mouseleave', () => {
-                circle.setAttribute('r', '6');
-                circle.setAttribute('stroke-width', '2');
-                tooltip.style.opacity = '0';
-            });
-            
-            trendSvg.appendChild(circle);
-            
-            // Add date label
+        points.forEach((p) => {
             const labelSpan = document.createElement('span');
-            labelSpan.className = 'font-label-caps text-label-caps text-on-surface-variant font-medium';
+            labelSpan.className = 'font-label-caps text-label-caps text-on-surface-variant font-medium absolute';
+            labelSpan.style.left = (p.x / svgW * 100) + '%';
+            labelSpan.style.transform = 'translateX(-50%)';
             labelSpan.textContent = formatDateStrShort(p.date);
             labelsContainer.appendChild(labelSpan);
         });
@@ -1135,26 +1153,39 @@
     
     function setupChartToggleHandlers() {
         const showChartBtn = document.getElementById('show-chart-btn');
+        const showBarsBtn = document.getElementById('show-bars-btn');
         const showTableBtn = document.getElementById('show-table-btn');
         const chartContainer = document.getElementById('chart-container');
         const chartTableContainer = document.getElementById('chart-table-container');
         
+        const activeClass = "px-md py-xs rounded-md bg-surface-container-lowest text-on-surface font-label-md shadow-sm transition-all duration-200";
+        const inactiveClass = "px-md py-xs rounded-md text-on-surface-variant hover:text-on-surface font-label-md transition-all duration-200";
+        
         showChartBtn.addEventListener('click', () => {
-            // Activate button styles
-            showChartBtn.className = "px-md py-xs rounded-md bg-surface-container-lowest text-on-surface font-label-md shadow-sm transition-all";
-            showTableBtn.className = "px-md py-xs rounded-md text-on-surface-variant hover:text-on-surface font-label-md transition-all";
-            
-            // Toggle containers
+            chartViewMode = 'line';
+            showChartBtn.className = activeClass;
+            showBarsBtn.className = inactiveClass;
+            showTableBtn.className = inactiveClass;
             chartContainer.classList.remove('hidden');
             chartTableContainer.classList.add('hidden');
+            renderDailyTrend();
+        });
+        
+        showBarsBtn.addEventListener('click', () => {
+            chartViewMode = 'bar';
+            showChartBtn.className = inactiveClass;
+            showBarsBtn.className = activeClass;
+            showTableBtn.className = inactiveClass;
+            chartContainer.classList.remove('hidden');
+            chartTableContainer.classList.add('hidden');
+            renderDailyTrend();
         });
         
         showTableBtn.addEventListener('click', () => {
-            // Activate button styles
-            showTableBtn.className = "px-md py-xs rounded-md bg-surface-container-lowest text-on-surface font-label-md shadow-sm transition-all";
-            showChartBtn.className = "px-md py-xs rounded-md text-on-surface-variant hover:text-on-surface font-label-md transition-all";
-            
-            // Toggle containers
+            chartViewMode = 'table';
+            showChartBtn.className = inactiveClass;
+            showBarsBtn.className = inactiveClass;
+            showTableBtn.className = activeClass;
             chartContainer.classList.add('hidden');
             chartTableContainer.classList.remove('hidden');
         });
