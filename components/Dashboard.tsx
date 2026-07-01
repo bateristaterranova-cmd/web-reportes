@@ -44,6 +44,134 @@ interface DashboardProps {
 
 const COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
 
+// Premium Custom Label Renderers with white background pills to prevent overlays and ensure 100% readability
+const renderBarLabel = (props: any) => {
+    const { x, y, width, value } = props;
+    if (value === undefined || value === null) return null;
+    const valStr = `S/ ${Math.round(Number(value)).toLocaleString('es-PE')}`;
+    const badgeWidth = Math.max(52, valStr.length * 6.2);
+    const centerX = x + width / 2;
+    return (
+        <g>
+            <rect 
+                x={centerX - badgeWidth / 2} 
+                y={y - 20} 
+                width={badgeWidth} 
+                height={14} 
+                fill="#ffffff" 
+                stroke="#4f46e5" 
+                strokeWidth={1} 
+                rx={4} 
+            />
+            <text 
+                x={centerX} 
+                y={y - 10} 
+                fill="#312e81" 
+                fontSize={8} 
+                fontWeight="bold" 
+                textAnchor="middle"
+            >
+                {valStr}
+            </text>
+        </g>
+    );
+};
+
+const renderLineLabel = (props: any) => {
+    const { x, y, value } = props;
+    if (value === undefined || value === null) return null;
+    const valStr = `S/ ${Math.round(Number(value)).toLocaleString('es-PE')}`;
+    const badgeWidth = Math.max(52, valStr.length * 6.2);
+    return (
+        <g>
+            <rect 
+                x={x - badgeWidth / 2} 
+                y={y - 20} 
+                width={badgeWidth} 
+                height={14} 
+                fill="#ffffff" 
+                stroke="#10b981" 
+                strokeWidth={1} 
+                rx={4} 
+            />
+            <text 
+                x={x} 
+                y={y - 10} 
+                fill="#047857" 
+                fontSize={8} 
+                fontWeight="bold" 
+                textAnchor="middle"
+            >
+                {valStr}
+            </text>
+        </g>
+    );
+};
+
+const renderHorizontalBarLabel = (props: any) => {
+    const { x, y, width, height, value } = props;
+    if (value === undefined || value === null) return null;
+    const valStr = `S/ ${Math.round(Number(value)).toLocaleString('es-PE')}`;
+    const badgeWidth = Math.max(52, valStr.length * 6.2);
+    const labelY = y + height / 2;
+    return (
+        <g>
+            <rect 
+                x={x + 6} 
+                y={labelY - 7} 
+                width={badgeWidth} 
+                height={14} 
+                fill="#ffffff" 
+                stroke="#10b981" 
+                strokeWidth={1} 
+                rx={4} 
+            />
+            <text 
+                x={x + 6 + badgeWidth / 2} 
+                y={labelY + 3} 
+                fill="#064e3b" 
+                fontSize={8} 
+                fontWeight="bold" 
+                textAnchor="middle"
+            >
+                {valStr}
+            </text>
+        </g>
+    );
+};
+
+const renderSellerBarLabel = (props: any) => {
+    const { x, y, width, height, value } = props;
+    if (value === undefined || value === null) return null;
+    const valStr = `S/ ${Math.round(Number(value)).toLocaleString('es-PE')}`;
+    const badgeWidth = Math.max(52, valStr.length * 6.2);
+    const labelY = y + height / 2;
+    return (
+        <g>
+            <rect 
+                x={x + 6} 
+                y={labelY - 7} 
+                width={badgeWidth} 
+                height={14} 
+                fill="#ffffff" 
+                stroke="#0ea5e9" 
+                strokeWidth={1} 
+                rx={4} 
+            />
+            <text 
+                x={x + 6 + badgeWidth / 2} 
+                y={labelY + 3} 
+                fill="#0369a1" 
+                fontSize={8} 
+                fontWeight="bold" 
+                textAnchor="middle"
+            >
+                {valStr}
+            </text>
+        </g>
+    );
+};
+
 export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
     const page1Ref = useRef<HTMLDivElement>(null);
     const page2Ref = useRef<HTMLDivElement>(null);
@@ -343,9 +471,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                                 {renderLabels && (
                                                     <LabelList
                                                         dataKey="revenue"
-                                                        position="top"
-                                                        formatter={(val: any) => `S/ ${Math.round(Number(val))}`}
-                                                        style={{ fontSize: 9, fill: '#312e81', fontWeight: 'bold' }}
+                                                        content={renderBarLabel}
                                                     />
                                                 )}
                                             </Bar>
@@ -353,9 +479,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                                 {renderLabels && (
                                                     <LabelList
                                                         dataKey="profit"
-                                                        position="top"
-                                                        formatter={(val: any) => `S/ ${Math.round(Number(val))}`}
-                                                        style={{ fontSize: 9, fill: '#064e3b', fontWeight: 'bold' }}
+                                                        content={renderLineLabel}
                                                     />
                                                 )}
                                             </Line>
@@ -388,7 +512,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                         <BarChart
                                             layout="vertical"
                                             data={data.topProducts}
-                                            margin={{ top: 5, right: 40, left: 10, bottom: 20 }}
+                                            margin={{ top: 5, right: 60, left: 10, bottom: 20 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                             <XAxis type="number" tickFormatter={(val) => `S/ ${val}`} tick={{ fontSize: 11 }} />
@@ -414,9 +538,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                                 {renderLabels && (
                                                     <LabelList
                                                         dataKey="value"
-                                                        position="right"
-                                                        formatter={(val: any) => `S/ ${Math.round(Number(val))}`}
-                                                        style={{ fontSize: 9, fill: '#064e3b', fontWeight: 'bold' }}
+                                                        content={renderHorizontalBarLabel}
                                                     />
                                                 )}
                                             </Bar>
@@ -436,7 +558,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                         <BarChart
                                             layout="vertical"
                                             data={data.sellers}
-                                            margin={{ top: 5, right: 40, left: 10, bottom: 20 }}
+                                            margin={{ top: 5, right: 60, left: 10, bottom: 20 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                             <XAxis type="number" tickFormatter={(val) => `S/ ${val}`} tick={{ fontSize: 11 }} />
@@ -458,9 +580,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                                 {renderLabels && (
                                                     <LabelList
                                                         dataKey="value"
-                                                        position="right"
-                                                        formatter={(val: any) => `S/ ${Math.round(Number(val))}`}
-                                                        style={{ fontSize: 9, fill: '#0f172a', fontWeight: 'bold' }}
+                                                        content={renderSellerBarLabel}
                                                     />
                                                 )}
                                             </Bar>
