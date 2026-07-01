@@ -44,30 +44,30 @@ interface DashboardProps {
 
 const COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
 
-// Premium Custom Label Renderers with white background pills to prevent overlays and ensure 100% readability
+// Premium Custom Label Renderers (Aesthetic badges, bigger font, solid borders, perfect legibility)
 const renderBarLabel = (props: any) => {
     const { x, y, width, value } = props;
     if (value === undefined || value === null) return null;
     const valStr = `S/ ${Math.round(Number(value)).toLocaleString('es-PE')}`;
-    const badgeWidth = Math.max(52, valStr.length * 6.2);
+    const badgeWidth = Math.max(58, valStr.length * 7.2);
     const centerX = x + width / 2;
     return (
         <g>
             <rect 
                 x={centerX - badgeWidth / 2} 
-                y={y - 20} 
+                y={y - 24} 
                 width={badgeWidth} 
-                height={14} 
+                height={17} 
                 fill="#ffffff" 
                 stroke="#4f46e5" 
-                strokeWidth={1} 
-                rx={4} 
+                strokeWidth={1.5} 
+                rx={5} 
             />
             <text 
                 x={centerX} 
-                y={y - 10} 
+                y={y - 12} 
                 fill="#312e81" 
-                fontSize={8} 
+                fontSize={9.5} 
                 fontWeight="bold" 
                 textAnchor="middle"
             >
@@ -81,24 +81,24 @@ const renderLineLabel = (props: any) => {
     const { x, y, value } = props;
     if (value === undefined || value === null) return null;
     const valStr = `S/ ${Math.round(Number(value)).toLocaleString('es-PE')}`;
-    const badgeWidth = Math.max(52, valStr.length * 6.2);
+    const badgeWidth = Math.max(58, valStr.length * 7.2);
     return (
         <g>
             <rect 
                 x={x - badgeWidth / 2} 
-                y={y - 20} 
+                y={y - 24} 
                 width={badgeWidth} 
-                height={14} 
+                height={17} 
                 fill="#ffffff" 
                 stroke="#10b981" 
-                strokeWidth={1} 
-                rx={4} 
+                strokeWidth={1.5} 
+                rx={5} 
             />
             <text 
                 x={x} 
-                y={y - 10} 
+                y={y - 12} 
                 fill="#047857" 
-                fontSize={8} 
+                fontSize={9.5} 
                 fontWeight="bold" 
                 textAnchor="middle"
             >
@@ -112,25 +112,25 @@ const renderHorizontalBarLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     if (value === undefined || value === null) return null;
     const valStr = `S/ ${Math.round(Number(value)).toLocaleString('es-PE')}`;
-    const badgeWidth = Math.max(52, valStr.length * 6.2);
+    const badgeWidth = Math.max(58, valStr.length * 7.2);
     const labelY = y + height / 2;
     return (
         <g>
             <rect 
                 x={x + 6} 
-                y={labelY - 7} 
+                y={labelY - 8.5} 
                 width={badgeWidth} 
-                height={14} 
+                height={17} 
                 fill="#ffffff" 
                 stroke="#10b981" 
-                strokeWidth={1} 
-                rx={4} 
+                strokeWidth={1.5} 
+                rx={5} 
             />
             <text 
                 x={x + 6 + badgeWidth / 2} 
-                y={labelY + 3} 
+                y={labelY + 3.5} 
                 fill="#064e3b" 
-                fontSize={8} 
+                fontSize={9.5} 
                 fontWeight="bold" 
                 textAnchor="middle"
             >
@@ -144,25 +144,25 @@ const renderSellerBarLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     if (value === undefined || value === null) return null;
     const valStr = `S/ ${Math.round(Number(value)).toLocaleString('es-PE')}`;
-    const badgeWidth = Math.max(52, valStr.length * 6.2);
+    const badgeWidth = Math.max(58, valStr.length * 7.2);
     const labelY = y + height / 2;
     return (
         <g>
             <rect 
                 x={x + 6} 
-                y={labelY - 7} 
+                y={labelY - 8.5} 
                 width={badgeWidth} 
-                height={14} 
+                height={17} 
                 fill="#ffffff" 
                 stroke="#0ea5e9" 
-                strokeWidth={1} 
-                rx={4} 
+                strokeWidth={1.5} 
+                rx={5} 
             />
             <text 
                 x={x + 6 + badgeWidth / 2} 
-                y={labelY + 3} 
+                y={labelY + 3.5} 
                 fill="#0369a1" 
-                fontSize={8} 
+                fontSize={9.5} 
                 fontWeight="bold" 
                 textAnchor="middle"
             >
@@ -178,7 +178,6 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
     const [timeView, setTimeView] = useState<'daily' | 'monthly'>('daily');
     const [viewMode, setViewMode] = useState<'charts' | 'table'>('charts');
     const [isSaving, setIsSaving] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
     const [showLabels, setShowLabels] = useState(true); // Always display values on charts statically by default
 
     // Search and pagination state for Table View
@@ -188,23 +187,19 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
 
     const downloadPDF = async () => {
         if (!page1Ref.current || !page2Ref.current) return;
-        setIsExporting(true);
-
-        // Wait a short moment to make sure rendering is complete
-        await new Promise((resolve) => setTimeout(resolve, 400));
 
         try {
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
 
-            // Render page 1
+            // Render page 1 (captures exactly what is shown on screen)
             const dataUrl1 = await toPng(page1Ref.current, { cacheBust: true, pixelRatio: 2, backgroundColor: '#ffffff' });
             const imgProps1 = pdf.getImageProperties(dataUrl1);
             const pageHeight1 = (imgProps1.height * pdfWidth) / imgProps1.width;
             pdf.addImage(dataUrl1, 'PNG', 0, 0, pdfWidth, Math.min(pdfHeight, pageHeight1));
 
-            // Render page 2
+            // Render page 2 (captures exactly what is shown on screen)
             pdf.addPage();
             const dataUrl2 = await toPng(page2Ref.current, { cacheBust: true, pixelRatio: 2, backgroundColor: '#ffffff' });
             const imgProps2 = pdf.getImageProperties(dataUrl2);
@@ -214,8 +209,6 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
             pdf.save(`Reporte_Ventas_${timeView === 'daily' ? 'Diario' : 'Mensual'}.pdf`);
         } catch (err) {
             console.error("Error generating PDF", err);
-        } finally {
-            setIsExporting(false);
         }
     };
 
@@ -290,8 +283,6 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
         if (str.includes(' ')) return str.split(' ')[0];
         return str;
     };
-
-    const renderLabels = showLabels || isExporting;
 
     return (
         <div className="max-w-7xl mx-auto">
@@ -468,7 +459,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                             />
                                             <Legend verticalAlign="top" height={36} />
                                             <Bar dataKey="revenue" name="Ingresos (PVenta)" barSize={timeView === 'daily' ? 15 : 30} fill="#4f46e5" radius={[4, 4, 0, 0]}>
-                                                {renderLabels && (
+                                                {showLabels && (
                                                     <LabelList
                                                         dataKey="revenue"
                                                         content={renderBarLabel}
@@ -476,7 +467,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                                 )}
                                             </Bar>
                                             <Line type="monotone" dataKey="profit" name="Ganancia (Margen)" stroke="#10b981" strokeWidth={3} dot={{ r: timeView === 'daily' ? 1.5 : 3 }} activeDot={{ r: 5 }}>
-                                                {renderLabels && (
+                                                {showLabels && (
                                                     <LabelList
                                                         dataKey="profit"
                                                         content={renderLineLabel}
@@ -535,7 +526,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                             />
                                             <Legend />
                                             <Bar dataKey="value" name="Ganancia Total (Margen)" fill="#10b981" radius={[0, 6, 6, 0]} barSize={25}>
-                                                {renderLabels && (
+                                                {showLabels && (
                                                     <LabelList
                                                         dataKey="value"
                                                         content={renderHorizontalBarLabel}
@@ -577,7 +568,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                                 {data.sellers.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
-                                                {renderLabels && (
+                                                {showLabels && (
                                                     <LabelList
                                                         dataKey="value"
                                                         content={renderSellerBarLabel}
