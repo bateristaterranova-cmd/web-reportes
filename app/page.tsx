@@ -6,6 +6,7 @@ import { Dashboard } from "@/components/Dashboard";
 import { DataFixer } from "@/components/DataFixer";
 import { AlertCircle, BarChart3, Clock, ChevronRight, Download } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import pkg from "../package.json";
 
 export default function Home() {
   const [data, setData] = useState<any>(null);
@@ -111,8 +112,11 @@ export default function Home() {
                   <BarChart3 className="w-8 h-8 text-white" />
                 </div>
               </div>
-              <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
+              <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4 flex items-center justify-center gap-3">
                 Dashboard de Ventas
+                <span className="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
+                  v{pkg.version}
+                </span>
               </h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Sube tu archivo de ventas o revisa reportes anteriores guardados.
