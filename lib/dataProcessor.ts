@@ -38,6 +38,8 @@ export function aggregateData(rawData: SalesData[]) {
     let totalProfit = 0;
     let totalRevenue = 0;
     const uniqueOrders = new Set<string>();
+    let minDate: Date | null = null;
+    let maxDate: Date | null = null;
 
     rawData.forEach((row) => {
         let dateObj: Date | null = null;
@@ -83,6 +85,13 @@ export function aggregateData(rawData: SalesData[]) {
         }
 
         if (dateObj && !isNaN(dateObj.getTime())) {
+            if (!minDate || dateObj < minDate) {
+                minDate = dateObj;
+            }
+            if (!maxDate || dateObj > maxDate) {
+                maxDate = dateObj;
+            }
+
             const year = dateObj.getFullYear();
             const monthNum = (dateObj.getMonth() + 1).toString().padStart(2, '0');
             const dayNum = dateObj.getDate().toString().padStart(2, '0');
@@ -147,6 +156,14 @@ export function aggregateData(rawData: SalesData[]) {
     const totalOrders = uniqueOrders.size > 0 ? uniqueOrders.size : rawData.length;
     const averageTicket = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
+    const formatDateString = (d: Date | null) => {
+        if (!d) return "";
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${day}/${month}/${year}`;
+    };
+
     return {
         daily: dailyData,
         monthly: monthlyData,
@@ -158,6 +175,8 @@ export function aggregateData(rawData: SalesData[]) {
             totalRevenue,
             totalOrders,
             averageTicket,
+            startDate: formatDateString(minDate),
+            endDate: formatDateString(maxDate),
         },
         rawData
     };

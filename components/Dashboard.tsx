@@ -34,6 +34,8 @@ interface DashboardProps {
             totalRevenue?: number;
             totalOrders?: number;
             averageTicket?: number;
+            startDate?: string;
+            endDate?: string;
         };
         rawData?: SalesData[];
     };
@@ -49,6 +51,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
     const [viewMode, setViewMode] = useState<'charts' | 'table'>('charts');
     const [isSaving, setIsSaving] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [showLabels, setShowLabels] = useState(true); // Always display values on charts statically by default
 
     // Search and pagination state for Table View
     const [searchTerm, setSearchTerm] = useState("");
@@ -59,7 +62,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
         if (!page1Ref.current || !page2Ref.current) return;
         setIsExporting(true);
 
-        // Wait a short moment to allow LabelList to render in the DOM
+        // Wait a short moment to make sure rendering is complete
         await new Promise((resolve) => setTimeout(resolve, 400));
 
         try {
@@ -160,10 +163,12 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
         return str;
     };
 
+    const renderLabels = showLabels || isExporting;
+
     return (
         <div className="max-w-7xl mx-auto">
             {/* Header Control Panel */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
                 
                 {/* View Mode Toggle */}
                 <div className="flex bg-gray-100 p-1 rounded-xl border">
@@ -189,31 +194,46 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                     </button>
                 </div>
 
-                {/* Time View Selector (Only if in Charts view) */}
-                {viewMode === 'charts' && (
-                    <div className="flex bg-gray-100 p-1 rounded-xl border">
-                        <button
-                            onClick={() => setTimeView('daily')}
-                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                                timeView === 'daily'
-                                    ? 'bg-white text-indigo-700 shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
-                            }`}
-                        >
-                            Vista Diaria
-                        </button>
-                        <button
-                            onClick={() => setTimeView('monthly')}
-                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                                timeView === 'monthly'
-                                    ? 'bg-white text-indigo-700 shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
-                            }`}
-                        >
-                            Vista Mensual
-                        </button>
-                    </div>
-                )}
+                <div className="flex flex-wrap items-center gap-4">
+                    {/* Time View Selector (Only if in Charts view) */}
+                    {viewMode === 'charts' && (
+                        <div className="flex bg-gray-100 p-1 rounded-xl border">
+                            <button
+                                onClick={() => setTimeView('daily')}
+                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                                    timeView === 'daily'
+                                        ? 'bg-white text-indigo-700 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                            >
+                                Vista Diaria
+                            </button>
+                            <button
+                                onClick={() => setTimeView('monthly')}
+                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                                    timeView === 'monthly'
+                                        ? 'bg-white text-indigo-700 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                            >
+                                Vista Mensual
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Data Labels Toggle */}
+                    {viewMode === 'charts' && (
+                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border px-3 py-2 rounded-xl shadow-sm cursor-pointer hover:bg-slate-50 transition-all select-none border-slate-200">
+                            <input
+                                type="checkbox"
+                                checked={showLabels}
+                                onChange={(e) => setShowLabels(e.target.checked)}
+                                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
+                            />
+                            <span>Valores en gráficos</span>
+                        </label>
+                    )}
+                </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-4">
@@ -244,9 +264,14 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                         <header className="border-b pb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-2">
                             <div>
                                 <h2 className="text-3xl font-bold text-gray-900">Resumen Ejecutivo</h2>
-                                <p className="text-gray-500 mt-2">
+                                <p className="text-gray-500 mt-1.5">
                                     Análisis detallado de ventas, ganancias y rendimiento ({timeView === 'daily' ? 'Por día' : 'Por mes'}).
                                 </p>
+                                {data.kpi.startDate && data.kpi.endDate && (
+                                    <p className="text-sm font-semibold text-indigo-600 mt-2 bg-indigo-50 inline-block px-3 py-1 rounded-lg border border-indigo-100">
+                                        Período: {data.kpi.startDate} al {data.kpi.endDate}
+                                    </p>
+                                )}
                             </div>
                             <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full border border-slate-200 self-start sm:self-auto">
                                 {timeView === 'daily' ? 'Diario' : 'Mensual'}
@@ -315,7 +340,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                             />
                                             <Legend verticalAlign="top" height={36} />
                                             <Bar dataKey="revenue" name="Ingresos (PVenta)" barSize={timeView === 'daily' ? 15 : 30} fill="#4f46e5" radius={[4, 4, 0, 0]}>
-                                                {isExporting && (
+                                                {renderLabels && (
                                                     <LabelList
                                                         dataKey="revenue"
                                                         position="top"
@@ -325,7 +350,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                                 )}
                                             </Bar>
                                             <Line type="monotone" dataKey="profit" name="Ganancia (Margen)" stroke="#10b981" strokeWidth={3} dot={{ r: timeView === 'daily' ? 1.5 : 3 }} activeDot={{ r: 5 }}>
-                                                {isExporting && (
+                                                {renderLabels && (
                                                     <LabelList
                                                         dataKey="profit"
                                                         position="top"
@@ -343,6 +368,13 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
 
                     {/* PAGE 2: Star Products, Performance by Seller */}
                     <div ref={page2Ref} className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 space-y-12">
+                        {data.kpi.startDate && data.kpi.endDate && (
+                            <div className="border-b pb-4 hidden print:block">
+                                <p className="text-sm font-semibold text-indigo-600">
+                                    Período del reporte: {data.kpi.startDate} al {data.kpi.endDate}
+                                </p>
+                            </div>
+                        )}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                             
                             {/* Top 10 Star Products */}
@@ -379,7 +411,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                             />
                                             <Legend />
                                             <Bar dataKey="value" name="Ganancia Total (Margen)" fill="#10b981" radius={[0, 6, 6, 0]} barSize={25}>
-                                                {isExporting && (
+                                                {renderLabels && (
                                                     <LabelList
                                                         dataKey="value"
                                                         position="right"
@@ -423,7 +455,7 @@ export function Dashboard({ data, onSaveSuccess }: DashboardProps) {
                                                 {data.sellers.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
-                                                {isExporting && (
+                                                {renderLabels && (
                                                     <LabelList
                                                         dataKey="value"
                                                         position="right"
