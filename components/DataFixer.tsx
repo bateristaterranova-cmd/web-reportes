@@ -10,6 +10,22 @@ interface DataFixerProps {
     onFixed: (fixedData: SalesData[]) => void;
 }
 
+// Clean helper to format dates from Excel serial numbers, Date objects, or date strings
+const formatDateVal = (dateVal: any) => {
+    if (!dateVal) return "-";
+    if (typeof dateVal === 'number') {
+        const utcDate = new Date(Math.round((dateVal - 25569) * 86400 * 1000));
+        return utcDate.toLocaleDateString('es-PE');
+    }
+    if (dateVal instanceof Date) {
+        return dateVal.toLocaleDateString('es-PE');
+    }
+    const str = String(dateVal);
+    if (str.includes('T')) return str.split('T')[0];
+    if (str.includes(' ')) return str.split(' ')[0];
+    return str;
+};
+
 export function DataFixer({ rawData, onFixed }: DataFixerProps) {
     const anomalousRows = rawData.filter(row => {
         const total = Number(row.Total) || Number(row.PVenta) || 0;
@@ -89,7 +105,7 @@ export function DataFixer({ rawData, onFixed }: DataFixerProps) {
 
                             return (
                                 <tr key={row._id} className="border-b last:border-0 hover:bg-gray-50">
-                                    <td className="px-4 py-3 whitespace-nowrap">{String(row["Fecha de la orden"] || row.Fecha).substring(0, 10)}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap">{formatDateVal(row["Fecha de la orden"] || row.Fecha)}</td>
                                     <td className="px-4 py-3 font-medium text-gray-800 max-w-[200px] truncate" title={row["Variante del producto"] || row.Descripcion}>
                                         {row["Variante del producto"] || row.Descripcion}
                                     </td>
